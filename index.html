@@ -16,7 +16,7 @@
       <div class="panel" id="solidPanel">
         
         <!-- Cancel Button -->
-        <div class="button buttonCircle buttonSolid" id="cancelButtonSolid">
+        <div class="button buttonCircle buttonSolid" id="clearButtonSolid">
           <button>X</button>
         </div>  
 
@@ -47,12 +47,12 @@
         <!-- Add Button -->
         <div class="addDestination">
           <div class="button buttonCircle buttonSolid buttonRight" id="addButtonSolid">
-            <button>+</button>
+            <button type="button">+</button>
           </div>
         </div>
 
         <!-- Optimize Route Button -->
-        <button class="button buttonSquared buttonSolid" id="optimizeButton">Optimize Route</button>
+        <button type="button" disabled class="button buttonSquared buttonSolid" id="optimizeButton">Optimize Route</button>
 
         <!-- Get Route Button -->
         <div class="bottomBar">
@@ -68,7 +68,7 @@
         <div class="topBar"></div>
 
         <!-- Cancel Button -->
-        <div class="button buttonCircle buttonFloat" id="cancelButtonFloat">
+        <div class="button buttonCircle buttonFloat" id="clearButtonFloat">
           <button>X</button>
         </div>  
 
@@ -110,36 +110,147 @@
 
     <div id="map"></div>
 
-    <!-- page interactions -->
     <script>
      
-
-    //TODO: change var to const OR let?
       var container = document.querySelector('.contain');
-      var addButtonFloat = document.querySelector('#addButtonFloat');
-      var goButtonFloat = document.querySelector('#goButtonFloat');
-      var cancelButton = document.querySelector('#cancelButtonSolid');
+
+      var clearButtonSolid = document.querySelector('#clearButtonSolid');
       var addButtonSolid = document.querySelector('#addButtonSolid');
       var goButtonSolid = document.querySelector('#goButtonSolid');
       var optimizeButton = document.querySelector('#optimizeButton');
 
-     //function to toggle change of panels
-      function changePanel(evt){
-        container.classList.toggle('panel-change');
-      }
+      var clearButtonFloat = document.querySelector('#clearButtonFloat');
+      var addButtonFloat = document.querySelector('#addButtonFloat');
+      var goButtonFloat = document.querySelector('#goButtonFloat');
+     
+     //copy input values from floatingPanel to solidPanel inputs
+      var floatToSolid = function() {
+        document.getElementById('startSolid').value = document.getElementById('startFloat').value;
+        document.getElementById('destinationSolid_1').value = document.getElementById('destinationFloat_1').value;
+      };
 
-      //change to solidPanel by clicking 'Go'
-      goButtonFloat.addEventListener('click', changePanel, false);
+      var inputCount = 0;
+        var deleteButtons = [];
 
-      //change to floatingPanel by clicking 'X'
-      cancelButton.addEventListener('click', changePanel);
-    
+        //DESCRIPTION: create new destination/waypoint input
+        var createInput = function () {
+          if (inputCount < 3){
+            var solidPanelDiv = document.getElementById('solidPanel');
+            var inputBody = solidPanelDiv.children[1].cloneNode(true);
+            var icon = inputBody.getElementsByTagName('div')[1];
+            var input = inputBody.getElementsByTagName('input')[0];
 
-    //Maps API 
+            icon.innerHTML = "<button type='button'></button>";
+            var delButton = icon.getElementsByTagName('button')[0];
+            delButton.id = 'delButton_' + inputCount;
+            input.id = 'waypoint_' + (inputCount);
+            input.value = "";
+            input.placeholder = "Enter Waypoint";
+            solidPanelDiv.insertBefore(inputBody, solidPanelDiv.children[2+inputCount]);
+
+            destinationAutoComplete = new google.maps.places.Autocomplete((document.getElementById('waypoint_' + (inputCount))));           
+        
+            inputCount++;
+          }          
+        };
+//DESCRIPTION: produces every possible sequence/order of the elements of an array
+        //ex. ABC ==> ABC, ACB, BCA, BAC, CAB, CBA
+        function allCombinations (startingIndex, result, lastPush){
+  
+          for (var i = 1; startingIndex <= result[0].length-2; i++){
+
+            var holder = lastPush.slice(0);
+            
+            allCombinations(startingIndex + 1, result, holder);
+
+            if (startingIndex + i <= result[0].length-1){
+              result.push(rotate(lastPush, startingIndex));   
+            } else {return result;}   
+          }
+        }
+
+        //rotates values of an array starting w/ a specified index 'start'
+        //e.g. ABC will become BCA
+        function rotate (arr, start){
+          var holder = arr[start];
+          for (var i = start; i < arr.length-1; i++){
+            arr[i] = arr[i+1];
+          }
+            arr[arr.length-1] = holder;
+            return arr.slice(0);
+        }
+
+        // document.getElementById('start').addEventListener('change', onChangeHandler);
+       // document.getElementById('destinationFloat_1').addEventListener('change', onChangeHandler);
+
        
-      function initMap() {
-        var optimizeRoute = false;
+        
+        function changePanel(evt){
+          container.classList.toggle('panel-change');
+        }
 
+        function testOptimize () {
+                if (inputCount > 1){optimizeButton.disabled = false;} 
+        }
+
+        function deleteInput (input) {
+          var inputBody = input.parentNode.parentNode;
+          inputBody.parentNode.removeChild(inputBody);
+
+          //fix waypoints array w/ filter
+        }
+
+        function makeDeleteButtonHandlers() {
+          for(var j = 0; j < deleteButtons.length; j++){
+            deleteButtons[j].addEventListener('click', deleteButtonHandler(deleteButtons[j]), false);
+          }       
+       }
+
+        function clearInputs () {
+          var inputFields = document.getElementsByTagName('input');
+          for (var i = 0; i < inputFields.length; i++){
+            inputFields[i].value = "";
+          }
+       }
+
+        
+
+        
+        //DESCRIPTION: stores waypoints in an array
+        var storeWaypoints = function () {
+          var waypoints = [];
+          var waypoint = "";
+
+          for (var i = 0; i < inputCount; i++){
+            waypoint = document.getElementById('waypoint_' + i).value;
+            waypoints.push({location: waypoint});
+          }
+          return waypoints;
+        };
+
+        function storeOptimalWaypoints (element) {
+          if(element.end_address !== element[element.length-1].end_address){
+            optimalRoute.push({location: element.end_address});}
+        }
+
+        function getTravelDuration () {
+          //get travel duration for routes w/ and w/out waypoints
+        }
+
+        function setMostEfficient (current, optimal, action) {
+          //assign the optimal travel duration to optimatlTravleTime
+          if (current < optimal || optimal === 0){
+            optimal = current;
+            if (typeof action === 'function'){ action();
+              return optimal;
+            } 
+          } 
+          return optimal;
+
+        }
+
+      //Maps API  
+      function initMap() {
 
         var directionsService = new google.maps.DirectionsService;
         var directionsDisplay = new google.maps.DirectionsRenderer;
@@ -148,7 +259,7 @@
           zoom: 13
         });
 
-        //DESCRIPTION: initializes AutoComplete
+        //DESCRIPTION: initializes AutoComplete for input fields
         startAutocomplete = new google.maps.places.Autocomplete((document.getElementById('startFloat')));
 
         endAutocomplete = new google.maps.places.Autocomplete((document.getElementById('destinationFloat_1')));
@@ -178,235 +289,75 @@
         //DESCRIPTION: Calculate and display directions
         directionsDisplay.setMap(map);
 
-        //move places values from floatingPanel to solidPanel
-
-
-        var floatToSolid = function() {
-          document.getElementById('startSolid').value = document.getElementById('startFloat').value;
-          document.getElementById('destinationSolid_1').value = document.getElementById('destinationFloat_1').value;
-        };
-
-        var onChangeHandler = function() {
-          calcRoute(storeWaypoints(), optimizeRoute);
-        };
-
-        var inputCount = 2;
-
-        //DESCRIPTION: create new destination/waypoint input
-        //TODO: clean up waypoint count
-        var createInput = function () {
-
-          //waypoint_x.innerHtml = solidPanelDiv.children[2].innerHtml;
-          //change id
-
-          if (inputCount <= 4){
-            //append new input after third child of <div class="panel solidPanel">
-            var solidPanelDiv = document.getElementById('solidPanel');
-
-            //create containing div's
-            var rowDiv = document.createElement('div');
-            rowDiv.className = 'nav-row-Solid';
-            solidPanelDiv.insertBefore(rowDiv, solidPanelDiv.children[inputCount]);
-
-
-            var inputFrame = document.createElement('div');
-            inputFrame.className = 'input-frame col-xs-12';
-            rowDiv.appendChild(inputFrame);
-
-            //create new input
-            //TODO: add in bullet points for each waypoint field
-            var icon = document.createElement('div');
-            icon.className = 'labelSolid col-xs-2';
-            // icon.innerHTML =;
-            inputFrame.appendChild(icon);
-
-            var inputFrame2 = document.createElement('div');
-            inputFrame2.className = 'col-xs-10';
-            inputFrame.appendChild(inputFrame2);
-
-            var input = document.createElement('input');
-            input.type = 'text';
-            input.placeholder = 'Enter Address';
-            input.className = 'input-field-Solid';
-            input.id = 'waypoint_' + (inputCount-1);
-            inputFrame2.appendChild(input);
-
-            //create underline div
-            var underline = document.createElement('div');
-            underline.className = 'underlineSolid';
-            inputFrame2.appendChild(underline); 
-
-            destinationAutoComplete = new google.maps.places.Autocomplete((document.getElementById('waypoint_' + (inputCount-1))));           
-
-            inputCount++;
-          }
-          
-        };
-
-        //TODO: clean up waypoint count
-        var rearrangeWaypoints = function(arr) {
-            //change arr[x] to waypoint_ + [x].value
-            for (var i = 1; i <= arr.length; i++){
-              getElementById('waypoint_' + (i)).value = arr[i-1];
-            }
-        };
-
-        //DESCRIPTION: stores waypoints in an array
-        //TODO: clean up waypoint count
-        var storeWaypoints = function () {
-          var waypoints = [];
-          var waypoint = "";
-
-          for (var i = 1; i < inputCount-1; i++){
-            waypoint = document.getElementById('waypoint_' + i).value;
-            waypoints.push({location: waypoint});
-          }
-          return waypoints;
-        };
-
-        function getTravelDuration () {
-          //get travel duration for routes w/ and w/out waypoints
-        }
-
-        function setMostEfficient (current, optimal, arr, unit, pushedObject) {
-          if (current < optimal || optimal === 0){
-            optimal = current;
-            arr = [];
-            for (var i = 0; i < unit.length-1; i++){
-              arr.push(pushedObject);
-            }
-          }
-        }
-
-        //DESCRIPTION: produces every possible sequence/order of the elements of an array
-        //ex. ABC ==> ABC, ACB, BCA, BAC, CAB, CBA
-        function allCombinations (startingIndex, result, lastPush){
-  
-          for (var i = 1; startingIndex <= result[0].length-2; i++){
-
-            var holder = lastPush.slice(0);
-            
-            allCombinations(startingIndex + 1, result, holder);
-
-            if (startingIndex + i <= result[0].length-1){
-              result.push(rotate(lastPush, startingIndex));   
-            } else {return result;}   
-          }
-        }
-
-        //rotates values of an array starting w/ a specified index 'start'
-        //e.g. ABC will become BCA
-        function rotate (arr, start){
-          var holder = arr[start];
-          for (var i = start; i < arr.length-1; i++){
-            arr[i] = arr[i+1];
-          }
-            arr[arr.length-1] = holder;
-            return arr.slice(0);
-        }
-
-        // document.getElementById('start').addEventListener('change', onChangeHandler);
-       // document.getElementById('destinationFloat_1').addEventListener('change', onChangeHandler);
-       function trueOptimize () {
-          optimizeRoute = true;
-       }
-
-
-
-       //function onChangeHandler () {
-        //test to see if 'optimizeButton' should be enabled
-       //}
-
-       function goButtonFloatHandler () {
-        floatToSolid();
-        changePanel();
-        calcRoute(storeWaypoints(), optimizeRoute);
-       }
-
-       function cancelButtonFloatHandler () {
-        //clear input fields
-        //clear map
-       }
-
-       function cancelButtonFloatHandler () {
-        //clear input fields
-        //clear map
-        //changePanel();
-       }
+        function goButtonFloatHandler () {
+          floatToSolid();
+          changePanel();
+          calcRoute(storeWaypoints(), false);
+         }
 
        function goButtonSolidHandler () {
         storeWaypoints();
-        calcRoute(storeWaypoints(), optimizeRoute);
+        calcRoute(storeWaypoints(), false);
        }
 
        function addButtonFloatHandler () {
         floatToSolid();
         createInput();
+        changePanel();
+       }
+
+       function clearButtonSolidHandler () {
+        clearInputs();
+        changePanel();
+       }
+
+       function addButtonSolidHandler () {
+        createInput();
+        testOptimize();
+        //makeDeleteButtonHandlers();
        }
 
        function optimizeButtonHandler () {
-        optimizeRoute = true;
-        calcRoute(storeWaypoints(), optimizeRoute);
+        calcRoute(storeWaypoints(), true);
        }
 
-       function deleteButtonHandler () {
-        //delete input
-       }
+        function deleteButtonHandler (input) {
+          deleteInput(input);
+          //fix waypoints array
+        }
 
-        goButtonFloat.addEventListener('click', floatToSolid);
-        goButtonFloat.addEventListener('click', onChangeHandler);
+        goButtonFloat.addEventListener('click', goButtonFloatHandler);
+        addButtonFloat.addEventListener('click', addButtonFloatHandler);
+        clearButtonFloat.addEventListener('click', clearInputs);
 
-        optimizeButton.addEventListener('click', trueOptimize);
-        //optimizeButton.addEventListener('click', storeWaypoints);
-        optimizeButton.addEventListener('click', onChangeHandler);
-
-        goButtonSolid.addEventListener('click', storeWaypoints);
-        goButtonSolid.addEventListener('click', onChangeHandler);
-
-        addButtonSolid.addEventListener('click', createInput);
-
-        //build waypoints array IF there are waypoints
+        goButtonSolid.addEventListener('click', goButtonSolidHandler);
+        addButtonSolid.addEventListener('click', addButtonSolidHandler);
+        clearButtonSolid.addEventListener('click', clearButtonSolidHandler);
+        optimizeButton.addEventListener('click', optimizeButtonHandler);
 
         //TODO: func parameters - waypoints, optimizeRoute, callBack?
         function calcRoute(waypoints, optimizeRoute) {
-
-
           var start = document.getElementById('startSolid').value;
-          var destination_1 = document.getElementById('destinationSolid_1').value;
-
-          
-          // var waypoint = "";
+          var destination_1 = document.getElementById('destinationSolid_1').value;          
           var waypointsArray = [];
-
           var travelTime = 0;
           var optimalTravelTime = 0;
           optimalRoute = [];
-
           var numRoute = 0;
           var gateOpen = true;
-
-          //store location value of waypoints in an array      
-          // for (var i = 1; i < inputCount-1; i++){
-          //   waypoint = document.getElementById('waypoint_' + i).value;
-          //   waypoints.push({location: waypoint});
-          // }
 
           if (waypoints.length > 0){
             waypointsArray.push(waypoints.slice(0));
           }
 
-
-          //produce array of all possible waypoint sequences
+          //IF optimizing route produce an array 
+          //of all possible waypoint sequences
           if (optimizeRoute){
-            if (waypoints.length > 1){ //TODO: if statement not necessary if optimizeRoute is disabled for waypoints.length < 2
-              allCombinations (0, waypointsArray, waypoints.slice(0));
-            }
+            allCombinations (0, waypointsArray, waypoints.slice(0)); 
           }
 
-          //var x = 0; //TODO: try changing x=1, x < waypoints.length
           var x = 0;
-          do {
-          
+          do {  
             var request = {
               origin: start,
               destination: destination_1,
@@ -414,98 +365,42 @@
               optimizeWaypoints: false, //I build this feature
               travelMode: google.maps.TravelMode.DRIVING
            };
-
            x++;
 
           directionsService.route(request, function(result, status) {
+            
             travelTime = 0;
 
-            //get total travel duration
-          if (waypointsArray.length > 0){
-            for (var r = 0;  r < result.routes[0].legs.length; r++ ){
-              travelTime += result.routes[0].legs[r].duration.value;
+            //get total travel duration for the route currently analyzed IF the route has waypoints
+            if (waypointsArray.length > 1){
+                result.routes[0].legs.forEach(function(element){
+                  travelTime += element.duration.value;
+                });
             }
-          }
-
-            
 
             if (optimizeRoute){
-              //assign the optimal travel duration to optimatlTravleTime
-              if (travelTime < optimalTravelTime || optimalTravelTime === 0){
-                optimalTravelTime = travelTime;
+              optimalTravelTime = setMostEfficient(travelTime, optimalTravelTime, function(){
                 optimalRoute = [];
-                for (var g = 0; g < result.routes[0].legs.length-1; g++){
-                  optimalRoute.push({location: result.routes[0].legs[g].end_address});
-                }
-                // optimalRoute = waypointsArray[numRoute].slice(0);
+                result.routes[0].legs.forEach(function(element){optimalRoute.push({location: element.end_address});
+                });
+                //'end_address' of the last 'leg' is equal to 'destination'
+                //delete the value at the last index
+                optimalRoute.pop();
+              });
 
-              }
-
-              //when waypointsArray has been exhausted push optimalRoute to waypointsArray, run the directions request 1 more time and display
-              // TODO: clean up uneccesary else if's
               if (numRoute === waypointsArray.length-1 && gateOpen){
                 gateOpen = false;
-                  calcRoute(optimalRoute, false);
+                calcRoute(optimalRoute, false);
               } 
-
             } else if (status === google.maps.DirectionsStatus.OK) {
                 directionsDisplay.setDirections(result);
                 }
 
             numRoute++;                  
-
           });
-            
-
-          } while (x < waypointsArray.length);
-        } 
-
-
-            
-          
-
-        }
-
-
-      //   function calculateAndDisplayRoute(directionsService, directionsDisplay) {
-      //     var waypoints = [];
-      //     var waypoint = "";
-
-      //     var start = document.getElementById('startSolid').value;
-      //     var destination_1 = document.getElementById('destinationSolid_1').value;
-
-      //     //store waypoints in an array      
-      //     for (var i = 2; i < inputCount; i++){
-      //       waypoint = document.getElementById('waypoint_' + i).value;
-      //       waypoints.push({location: waypoint});
-      //     }
-
-        
-          
-
-      //   if(start !== "" && start !== null && destination_1 !== "" && destination_1 !== null ){
-      //     directionsService.route({
-
-      //       origin: start,
-      //       destination: destination_1,
-      //       waypoints: waypoints,
-      //       optimizeWaypoints: false, //I build this feature
-      //       travelMode: google.maps.TravelMode.DRIVING
-      //     }, function(response, status) {
-      //       if (status === google.maps.DirectionsStatus.OK) {
-      //         directionsDisplay.setDirections(response);
-      //       } else {
-      //         window.alert('Directions request failed due to ' + status);
-      //        }
-      //     });
-      //   }
-
-      // }
-
-     // } //end function initMap()
-
-
-       
+        } while (x < waypointsArray.length);
+      } 
+    }
 
     </script>
 
