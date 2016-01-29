@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <title>Directions service</title>
     <link href="css\bootstrap.css" rel="stylesheet">
-    <link href="styles(test).css" rel="stylesheet" media="screen">
+    <link href="styles.css" rel="stylesheet" media="screen">
     <script type="text/javascript" src="js\jquery-1.11.3.min.js"></script>
   </head>
 
@@ -16,15 +16,15 @@
       <div class="panel" id="solidPanel">
         
         <!-- Cancel Button -->
-        <div class="button buttonCircle buttonSolid" id="clearButtonSolid">
-          <button>X</button>
+        <div>
+          <button  id="clearButtonSolid" class="button buttonSolid" type="button">X</button>
         </div>  
 
         <!-- Starting Location Field -->
         <div class="nav-row-Solid">
           <div class="input-frame col-xs-12">
-            <div class="labelSolid col-xs-2">O</div>
-            <div class="col-xs-10">
+            <div class="labelSolid">O</div>
+            <div class="frameSolid">
               <input type="text" placeholder="Enter Origin Address" id="startSolid"  class="input-field-Solid ">
               <div class="underlineSolid"></div>
             </div>
@@ -32,11 +32,12 @@
 
         </div><!-- end nav-row -->
 
+        <!-- TODO: change first destination to end destination -->
         <!-- First Destination Field -->
         <div class="nav-row-Solid">
           <div class="input-frame col-xs-12">
-            <div class="labelSolid col-xs-2">D</div>
-            <div class="col-xs-10">
+            <div class="labelSolid">D</div>
+            <div class="frameSolid">
               <input type="text" placeholder="Enter Destination" id="destinationSolid_1"  class="input-field-Solid">
               <div class="underlineSolid"></div>
             </div>
@@ -46,19 +47,14 @@
 
         <!-- Add Button -->
         <div class="addDestination">
-          <div class="button buttonCircle buttonSolid buttonRight" id="addButtonSolid">
-            <button type="button">+</button>
-          </div>
+          <button id="addButtonSolid" class="button buttonCircle buttonSolid buttonRight" type="button">+</button>
         </div>
 
-        <!-- Optimize Route Button -->
-        <button type="button" disabled class="button buttonSquared buttonSolid" id="optimizeButton">Optimize Route</button>
-
-        <!-- Get Route Button -->
-        <div class="bottomBar">
-          <div class="button buttonSquared buttonSolid buttonRight" id="goButtonSolid">
-            <button>Get Route</button>
-          </div>        
+        <div class="bottomBarSolid">
+          <!-- Optimize Route Button -->
+          <button id="optimizeButton" class="button buttonSquared buttonSolid" type="button" disabled>Optimize Route</button>
+          <!-- Get Route Button -->
+          <button id="goButtonSolid" class="button buttonSquared buttonSolid buttonRight" type="button">Get Route</button>
         </div>
 
       </div><!-- end solidPanel --> 
@@ -68,13 +64,13 @@
         <div class="topBar"></div>
 
         <!-- Cancel Button -->
-        <div class="button buttonCircle buttonFloat" id="clearButtonFloat">
-          <button>X</button>
+        <div>
+          <button id="clearButtonFloat" class="button buttonFloat" type="button">X</button>
         </div>  
 
         <div class="nav-row start-row">
         
-          <div class="input-frame col-xs-8">
+          <div class="input-frame frameFloat">
             <input type="text" placeholder="Enter Origin Address" id="startFloat"  class="input-field">
             <div class="underline"></div>
           </div><!-- end input-frame -->
@@ -82,8 +78,7 @@
         </div> <!-- end nav-row -->
 
         <div class="nav-row destination-row">
-          <div class="col-xs-2 cancelButton"></div>
-          <div class="input-frame col-xs-8">
+          <div class="input-frame frameFloat">
             <input type="text" placeholder="Enter Destination Address 1"  id="destinationFloat_1" class="input-field">
             <div class="underline"></div>
           </div><!-- end input-frame -->
@@ -91,16 +86,12 @@
       
         <!-- Add Button -->
         <div class="addDestination">
-          <div class="button buttonCircle buttonFloat buttonRight" id="addButtonFloat">
-            <button>+</button>
-          </div>
+          <button id="addButtonFloat" class="button buttonCircle buttonFloat buttonRight" type="button">+</button>
         </div>
 
         <!-- Get Directions Button -->
-        <div class="bottomBar">
-          <div class="button buttonSquared buttonFloat buttonRight" id="goButtonFloat">
-            <button>Get Directions</button>
-          </div>        
+        <div class="bottomBarFloat">
+          <button id="goButtonFloat" class="button buttonSquared buttonFloat buttonRight" type="button">Get Directions</button>
         </div>
 
       </div><!-- end floatingPanel -->
@@ -140,9 +131,12 @@
             var icon = inputBody.getElementsByTagName('div')[1];
             var input = inputBody.getElementsByTagName('input')[0];
 
-            icon.innerHTML = "<button type='button'></button>";
-            var delButton = icon.getElementsByTagName('button')[0];
-            delButton.id = 'delButton_' + inputCount;
+            //commented out, need more work, not critical
+            // icon.innerHTML = "<button type='button'></button>";
+            // var delButton = icon.getElementsByTagName('button')[0];
+            // delButton.id = 'delButton_' + inputCount;
+            icon.innerHTML = "";
+
             input.id = 'waypoint_' + (inputCount);
             input.value = "";
             input.placeholder = "Enter Waypoint";
