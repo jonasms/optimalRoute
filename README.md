@@ -7,6 +7,8 @@ and waypoint values given, placing the waypoints in the order that the waypoint 
 The 'Optimize Route' produces directions placing the waypoints in the most efficient/optimal order.
 
 LIMITATIONS: 
+  The app does not work well using specific locations or addresses. Some locations/addresses result in an output of their corresponding    city as opposed to the input address. The app works just fine with cities (ie. Berkekely, San Francisco, San Jose, etc.).
+
   The Google Maps API allows free users to input up to 8 Waypoints. 
 
   The 'Optimize Route' function works by producing every possible sequence/combination of the waypoints given.
