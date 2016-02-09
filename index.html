@@ -32,13 +32,12 @@
 
         </div><!-- end nav-row -->
 
-        <!-- TODO: change first destination to end destination -->
-        <!-- First Destination Field -->
+        <!-- End Destination Field -->
         <div class="nav-row-Solid">
           <div class="input-frame col-xs-12">
             <div class="labelSolid">D</div>
             <div class="frameSolid">
-              <input type="text" placeholder="Enter Destination" id="destinationSolid_1"  class="input-field-Solid">
+              <input type="text" placeholder="Enter Destination" id="endDestinationSolid"  class="input-field-Solid">
               <div class="underlineSolid"></div>
             </div>
           </div>
@@ -57,6 +56,12 @@
           <button id="goButtonSolid" class="button buttonSquared buttonSolid buttonRight" type="button">Get Route</button>
         </div>
 
+        <div class="resultsBar">
+          <div  class="durationInfo">
+            Trip Duration: <div id="routeDuration"></div>
+          </div>
+        </div> <!-- end resultsBar -->
+
       </div><!-- end solidPanel --> 
 
       <!-- start floatingPanel -->
@@ -68,8 +73,8 @@
           <button id="clearButtonFloat" class="button buttonFloat" type="button">X</button>
         </div>  
 
-        <div class="nav-row start-row">
-        
+        <!-- Starting Location Field -->
+        <div class="nav-row start-row">        
           <div class="input-frame frameFloat">
             <input type="text" placeholder="Enter Origin Address" id="startFloat"  class="input-field">
             <div class="underline"></div>
@@ -77,9 +82,10 @@
 
         </div> <!-- end nav-row -->
 
+        <!-- End Destination Field -->
         <div class="nav-row destination-row">
           <div class="input-frame frameFloat">
-            <input type="text" placeholder="Enter Destination Address 1"  id="destinationFloat_1" class="input-field">
+            <input type="text" placeholder="Enter Destination Address 1"  id="endDestinationFloat" class="input-field">
             <div class="underline"></div>
           </div><!-- end input-frame -->
         </div> <!-- end nav-row --> 
@@ -118,7 +124,7 @@
      //DESCRIPTION: copies Origin & Destination input values from floatingPanel to solidPanel 
       var floatToSolid = function() {
         document.getElementById('startSolid').value = document.getElementById('startFloat').value;
-        document.getElementById('destinationSolid_1').value = document.getElementById('destinationFloat_1').value;
+        document.getElementById('endDestinationSolid').value = document.getElementById('endDestinationFloat').value;
       };
 
       var inputCount = 0;
@@ -132,7 +138,8 @@
             var icon = inputBody.getElementsByTagName('div')[1];
             var input = inputBody.getElementsByTagName('input')[0];
 
-            icon.innerHTML = "";
+            icon.innerHTML = "<button id='delButton' class='button delButton'>X</button>";
+            //icon.innerHTML = "";
 
             input.className += 'waypoint-field';
             input.id = 'waypoint_' + (inputCount);
@@ -140,8 +147,11 @@
             input.placeholder = "Enter Waypoint";
             solidPanelDiv.insertBefore(inputBody, solidPanelDiv.children[1+inputCount]);
 
+            createDelButtonID(inputCount); 
+            createDelButtonHandler(inputCount);
+
             destinationAutoComplete = new google.maps.places.Autocomplete((document.getElementById('waypoint_' + (inputCount))));         
-          }          
+          } 
         };
         //DESCRIPTION: produces every possible sequence/order of the elements of an array
         //ex. ABC ==> ABC, ACB, BCA, BAC, CAB, CBA
@@ -181,42 +191,70 @@
                 } else { optimizeButton.disabled = true;} 
         }
 
-        function makeDeleteButtonHandlers() {
-          for(var j = 0; j < deleteButtons.length; j++){
-            deleteButtons[j].addEventListener('click', deleteButtonHandler(deleteButtons[j]), false);
-          }       
-       }
+        function createDelButtonID (count) {
+          var delButton = document.getElementById('delButton');
+          delButton.id = 'delButton_' + count;
+        }
+
+        function createDelButtonHandler (count) {
+          var delButton = document.querySelector('#delButton_'+ count);
+          delButton.addEventListener('click', function (delButton) {return function () {
+              deleteButtonHandler(delButton);
+            }
+          });
+        }
+
+        function deleteWaypoint (target) {
+          targetNode = document.getElementById('solidPanel');
+          targetNode.removeChild(targetNode.getElementsByClassName('nav-row-Solid')[getTarget(target.id)]);
+        }
+
+        function getTarget (id) {
+          var target = id.slice(-1);
+          return target;
+
+        }
+
+        function deleteButtonHandler (input) {
+          deleteWaypoint(input);
+          //fix waypoints array
+        }
 
         //DESCRIPTION: deletes waypoint input fields & supporting div's
         function deleteWaypoints () {
-          var waypointField;
-          var node;
+          var targetNode;
+          var waypointInputs = document.getElementsByClassName('waypoint-field');
+          var waypointsArr = toArr(waypointInputs);
 
-          for (var i = 0; i < inputCount; inputCount--){
-            waypointField = document.getElementById('waypoint_' + inputCount);
-            node = waypointField.parentNode.parentNode.parentNode.parentNode;
-            node.removeChild(node.getElementsByClassName('nav-row-Solid')[inputCount]);
-          }
+          waypointsArr.forEach(function (){
+            targetNode = document.getElementById('solidPanel');
+            targetNode.removeChild(targetNode.getElementsByClassName('nav-row-Solid')[1]);
+          });
+
+          inputCount = 0;
         }
 
         //clears all input fields
         function clearInputs () {
           var inputFields = document.getElementsByTagName('input');
-          for (var i = 0; i < inputFields.length; i++){
-            inputFields[i].value = "";
-          }
+
+          Array.prototype.forEach.call(inputFields, function (element){
+            element.value = "";
+          });
        }
         
         //DESCRIPTION: stores waypoints in an array
         var storeWaypoints = function () {
-          var waypoints = [];
-          var waypoint = "";
+          var waypointsArr = [];
+          var waypointInputs = document.getElementsByClassName('waypoint-field');
 
-          for (var i = 1; i <= inputCount; i++){
-            waypoint = document.getElementById('waypoint_' + i).value;
-            waypoints.push({location: waypoint});
-          }
-          return waypoints;
+          waypointsArr = Array.prototype.map.call(waypointInputs, function (waypoint) {
+              waypointObj = {};
+              waypointObj["location"] = waypoint.value;
+              return waypointObj;
+          });
+
+          return waypointsArr;
         };
 
         //DESCRIPTION: stores waypoints of the current Optimal Route in a passed-in array
@@ -237,6 +275,84 @@
 
         }
 
+        function pullData (objArr, values){
+          var newArr = [];
+          //var vObj = {};
+
+          values.forEach(function (val, index){
+            var valArr = objArr.map(function (obj, objIndex){
+              //create proper property call using bracket notation
+              return getPropertyVal(obj, val);
+              //return obj[val];
+            })
+            newArr.push(valArr);
+          })
+
+        function getPropertyVal (obj, property){
+          var propArr = [];
+          var val = obj;
+
+          propArr = property.split('.');
+          propArr.forEach(function (element) {
+            val = val[element];
+          })
+          return val;
+        }
+         
+          return newArr;
+        }
+
+        function displayRouteInfo (routeInfo){
+          var legInfoArr = [];
+
+          legInfoArr = createUnits(routeInfo);
+          //display start + end destinations, duration, distance
+
+          legInfoArr.forEach(function (priEl, priIndex){
+            legInfoArr[priIndex].forEach(function (secEl)){
+              //start = legInfoArr[priIndex][0]
+              //end = legInfoArr[priIndex][1]
+              //duration = legInfoArr[priIndex][2]
+            }
+          })
+
+          routeInfo.forEach(function (element, index){
+            routeInfo[index].forEach(function )
+          })
+
+          routeInfoDisplay = document.createElement('div');
+          routeInfoDisplay.class = 'routeInfoDisplay';
+
+          legInfoDisplay = document.createElement('div');
+          legInfoDisplay.class = 'legInfoDisplay';
+          //for every end_address produce a div container thing   
+        }
+
+        //TODO: replace one of the for's w/ a .forEach() AND/OR .map()
+        function createUnits (infoArr) {
+          var unitsArr = [];
+          var aUnit = [];
+
+          for (var i = 0; i < infoArr.length; i++){
+            for (var x = 0; x < infoArr[i].length; x++){
+              aUnit.push(infoArr[x][i])
+            }
+            unitsArr.push(aUnit.slice(0));
+            aUnit = [];
+          }
+
+          // infoArr.forEach(function (priEl, priIndex){
+          //   unitsArr.push(infoArr.map(function (secEL, secIndex){
+          //     return infoArr[secIndex][priIndex];
+          //   }))
+          // })
+          return unitsArr;
+        }
+
+        function toArr (arrLike) {
+          return Array.prototype.slice.call(arrLike);
+        }
+
       //Maps API  
       function initMap() {
         //Google Map Api Default Code
@@ -250,11 +366,11 @@
         //DESCRIPTION: initializes AutoComplete for input fields
         startAutocomplete = new google.maps.places.Autocomplete((document.getElementById('startFloat')));
 
-        endAutocomplete = new google.maps.places.Autocomplete((document.getElementById('destinationFloat_1')));
+        endAutocomplete = new google.maps.places.Autocomplete((document.getElementById('endDestinationFloat')));
 
         startAutocompleteSolid = new google.maps.places.Autocomplete((document.getElementById('startSolid')));
 
-        destination_1AutocompleteSolid = new google.maps.places.Autocomplete((document.getElementById('destinationSolid_1')));
+        destination_1AutocompleteSolid = new google.maps.places.Autocomplete((document.getElementById('endDestinationSolid')));
 
         places = new google.maps.places.PlacesService(map);
 
@@ -285,56 +401,54 @@
           calcRoute(storeWaypoints(), false);
          }
 
-       function goButtonSolidHandler () {
-        storeWaypoints();
-        calcRoute(storeWaypoints(), false);
-       }
+        function goButtonSolidHandler () {
+          storeWaypoints();
+          calcRoute(storeWaypoints(), false);
+         }
 
-       function addButtonFloatHandler () {
-        floatToSolid();
-        createInput();
-        changePanel();
-       }
+        function addButtonFloatHandler () {
+          floatToSolid();
+          createInput();
+          changePanel();
+         }
 
-       function clearButtonSolidHandler () {
-        deleteWaypoints();
-        clearInputs();
-        changePanel();
-        testOptimize();
-       }
+        function clearButtonSolidHandler () {
+          deleteWaypoints();
+          clearInputs();
+          changePanel();
+          testOptimize();
+         }
 
-       function addButtonSolidHandler () {
-        createInput();
-        testOptimize();
-        //makeDeleteButtonHandlers();
-       }
+        function addButtonSolidHandler () {
+          createInput();
+          testOptimize();
+          //makeDeleteButtonHandlers();
+         }
 
-       function optimizeButtonHandler () {
-        calcRoute(storeWaypoints(), true);
-       }
+        function optimizeButtonHandler () {
+          calcRoute(storeWaypoints(), true);
+         }
 
-        function deleteButtonHandler (input) {
-          deleteInput(input);
-          //fix waypoints array
-        }
+        
 
         //DESCRIPTION: Assignment of Button Actions
-        goButtonFloat.addEventListener('click', goButtonFloatHandler);
-        addButtonFloat.addEventListener('click', addButtonFloatHandler);
-        clearButtonFloat.addEventListener('click', clearInputs);
+      goButtonFloat.addEventListener('click', goButtonFloatHandler);
+      addButtonFloat.addEventListener('click', addButtonFloatHandler);
+      clearButtonFloat.addEventListener('click', clearInputs);
 
-        goButtonSolid.addEventListener('click', goButtonSolidHandler);
-        addButtonSolid.addEventListener('click', addButtonSolidHandler);
-        clearButtonSolid.addEventListener('click', clearButtonSolidHandler);
-        optimizeButton.addEventListener('click', optimizeButtonHandler);
+      goButtonSolid.addEventListener('click', goButtonSolidHandler);
+      addButtonSolid.addEventListener('click', addButtonSolidHandler);
+      clearButtonSolid.addEventListener('click', clearButtonSolidHandler);
+      optimizeButton.addEventListener('click', optimizeButtonHandler);
+      //delButton.addEventListener('click', deleteButtonHandler(delButton));
 
-        //TODO: func parameters - waypoints, optimizeRoute, callBack?
         function calcRoute(waypoints, optimizeRoute) {
           var start = document.getElementById('startSolid').value;
-          var destination_1 = document.getElementById('destinationSolid_1').value;          
+          var destination_1 = document.getElementById('endDestinationSolid').value;          
           var waypointsArray = [];
           var travelTime = 0;
           var optimalTravelTime = 0;
+          routeInfo = [];
           optimalRoute = [];
           var numRoute = 0;
           var gateOpen = true;
@@ -364,11 +478,17 @@
             
             travelTime = 0;
 
+            //TODO: simplify? use w/out valuesNameArr
+            routeInfo = pullData(result.routes[0].legs, ["start_address", "end_address", "duration.value"]);
+
             //get total travel duration for the route currently analyzed IF the route has waypoints
             if (waypointsArray.length > 1){
-                result.routes[0].legs.forEach(function(element){
-                  travelTime += element.duration.value;
-                });
+
+              travelTime = routeInfo[2].reduce(function (previousVal, currentVal){return previousVal + currentVal;})
+
+              // result.routes[0].legs.forEach(function(element){
+              //   travelTime += element.duration.value;
+              // });
             }
 
             if (optimizeRoute){
@@ -386,6 +506,7 @@
                 calcRoute(optimalRoute, false);
               } 
             } else if (status === google.maps.DirectionsStatus.OK) {
+                //displayRouteInfo(routeInfo);
                 directionsDisplay.setDirections(result);
                 }
 

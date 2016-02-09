@@ -201,6 +201,11 @@ margin-left: 135px;
 	margin-right: 15%;
 }
 
+.delButton {
+	background-color: #3366cc;
+	border: none;
+}
+
 .addButton {
 	float:right;
 	margin-right: 15%;	
