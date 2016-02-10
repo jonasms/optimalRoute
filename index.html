@@ -56,11 +56,7 @@
           <button id="goButtonSolid" class="button buttonSquared buttonSolid buttonRight" type="button">Get Route</button>
         </div>
 
-        <div class="resultsBar">
-          <div  class="durationInfo">
-            Trip Duration: <div id="routeDuration"></div>
-          </div>
-        </div> <!-- end resultsBar -->
+        <div id="routeInfoDisplay"></div> 
 
       </div><!-- end solidPanel --> 
 
@@ -129,229 +125,262 @@
 
       var inputCount = 0;
 
-        //DESCRIPTION: create new destination/waypoint input HTML elements
-        var createInput = function () {
-          if (inputCount < 3){
-            inputCount++;            
-            var solidPanelDiv = document.getElementById('solidPanel');
-            var inputBody = solidPanelDiv.children[1].cloneNode(true);
-            var icon = inputBody.getElementsByTagName('div')[1];
-            var input = inputBody.getElementsByTagName('input')[0];
+      //DESCRIPTION: create new destination/waypoint input HTML elements
+      var createInput = function () {
+        if (inputCount < 3){
+          inputCount++;            
+          var solidPanelDiv = document.getElementById('solidPanel');
+          var inputBody = solidPanelDiv.children[1].cloneNode(true);
+          var icon = inputBody.getElementsByTagName('div')[1];
+          var input = inputBody.getElementsByTagName('input')[0];
 
-            icon.innerHTML = "<button id='delButton' class='button delButton'>X</button>";
-            //icon.innerHTML = "";
+          icon.innerHTML = "<button id='delButton' class='button delButton'>X</button>";
+          //icon.innerHTML = "";
 
-            input.className += 'waypoint-field';
-            input.id = 'waypoint_' + (inputCount);
-            input.value = "";
-            input.placeholder = "Enter Waypoint";
-            solidPanelDiv.insertBefore(inputBody, solidPanelDiv.children[1+inputCount]);
+          input.className += 'waypoint-field';
+          input.id = 'waypoint_' + (inputCount);
+          input.value = "";
+          input.placeholder = "Enter Waypoint";
+          solidPanelDiv.insertBefore(inputBody, solidPanelDiv.children[1+inputCount]);
 
-            createDelButtonID(inputCount); 
-            createDelButtonHandler(inputCount);
+          createDelButtonID(inputCount); 
+          createDelButtonHandler(inputCount);
 
-            destinationAutoComplete = new google.maps.places.Autocomplete((document.getElementById('waypoint_' + (inputCount))));         
-          } 
-        };
-        //DESCRIPTION: produces every possible sequence/order of the elements of an array
-        //ex. ABC ==> ABC, ACB, BCA, BAC, CAB, CBA
-        function allCombinations (startingIndex, result, lastPush){
-  
-          for (var i = 1; startingIndex <= result[0].length-2; i++){
+          destinationAutoComplete = new google.maps.places.Autocomplete((document.getElementById('waypoint_' + (inputCount))));         
+        } 
+      };
+      //DESCRIPTION: produces every possible sequence/order of the elements of an array
+      //ex. ABC ==> ABC, ACB, BCA, BAC, CAB, CBA
+      function allCombinations (startingIndex, result, lastPush){
 
-            var holder = lastPush.slice(0);
-            
-            allCombinations(startingIndex + 1, result, holder);
+        for (var i = 1; startingIndex <= result[0].length-2; i++){
 
-            if (startingIndex + i <= result[0].length-1){
-              result.push(rotate(lastPush, startingIndex));   
-            } else {return result;}   
+          var holder = lastPush.slice(0);
+          
+          allCombinations(startingIndex + 1, result, holder);
+
+          if (startingIndex + i <= result[0].length-1){
+            result.push(rotate(lastPush, startingIndex));   
+          } else {return result;}   
+        }
+      }
+
+      //DESCRIPTION: rotates values of an array starting w/ a specified index 'start'
+      //e.g. ABC will become BCA
+      function rotate (arr, start){
+        var holder = arr[start];
+        for (var i = start; i < arr.length-1; i++){
+          arr[i] = arr[i+1];
+        }
+          arr[arr.length-1] = holder;
+          return arr.slice(0);
+      }
+
+      function changePanel(){
+        container.classList.toggle('panel-change');
+      }
+
+      //DESCRIPTION: enables and disables optimizeRouteButton
+      function testOptimize () {
+              if (inputCount > 1){
+                optimizeButton.disabled = false;
+              } else { optimizeButton.disabled = true;} 
+      }
+
+      function createDelButtonID (count) {
+        var delButton = document.getElementById('delButton');
+        delButton.id = 'delButton_' + count;
+      }
+
+      function createDelButtonHandler (count) {
+        var delButton = document.querySelector('#delButton_'+ count);
+        delButton.addEventListener('click', function (delButton) {return function () {
+            deleteButtonHandler(delButton);
           }
-        }
+        });
+      }
 
-        //DESCRIPTION: rotates values of an array starting w/ a specified index 'start'
-        //e.g. ABC will become BCA
-        function rotate (arr, start){
-          var holder = arr[start];
-          for (var i = start; i < arr.length-1; i++){
-            arr[i] = arr[i+1];
-          }
-            arr[arr.length-1] = holder;
-            return arr.slice(0);
-        }
+      function deleteWaypoint (target) {
+        targetNode = document.getElementById('solidPanel');
+        targetNode.removeChild(targetNode.getElementsByClassName('nav-row-Solid')[getTarget(target.id)]);
+      }
 
-        function changePanel(){
-          container.classList.toggle('panel-change');
-        }
+      function getTarget (id) {
+        var target = id.slice(-1);
+        return target;
 
-        //DESCRIPTION: enables and disables optimizeRouteButton
-        function testOptimize () {
-                if (inputCount > 1){
-                  optimizeButton.disabled = false;
-                } else { optimizeButton.disabled = true;} 
-        }
+      }
 
-        function createDelButtonID (count) {
-          var delButton = document.getElementById('delButton');
-          delButton.id = 'delButton_' + count;
-        }
+      function deleteButtonHandler (input) {
+        deleteWaypoint(input);
+        //fix waypoints array
+      }
 
-        function createDelButtonHandler (count) {
-          var delButton = document.querySelector('#delButton_'+ count);
-          delButton.addEventListener('click', function (delButton) {return function () {
-              deleteButtonHandler(delButton);
-            }
-          });
-        }
+      //DESCRIPTION: deletes waypoint input fields & supporting div's
+      function deleteWaypoints () {
+        var targetNode;
+        var waypointInputs = document.getElementsByClassName('waypoint-field');
+        var waypointsArr = toArr(waypointInputs);
 
-        function deleteWaypoint (target) {
+        waypointsArr.forEach(function (){
           targetNode = document.getElementById('solidPanel');
-          targetNode.removeChild(targetNode.getElementsByClassName('nav-row-Solid')[getTarget(target.id)]);
-        }
+          targetNode.removeChild(targetNode.getElementsByClassName('nav-row-Solid')[1]);
+        });
 
-        function getTarget (id) {
-          var target = id.slice(-1);
-          return target;
+        inputCount = 0;
+      }
 
-        }
+      //clears all input fields
+      function clearInputs () {
+        var inputFields = document.getElementsByTagName('input');
 
-        function deleteButtonHandler (input) {
-          deleteWaypoint(input);
-          //fix waypoints array
-        }
+        Array.prototype.forEach.call(inputFields, function (element){
+          element.value = "";
+        });
+     }
+      
+      //DESCRIPTION: stores waypoints in an array
+      var storeWaypoints = function () {
+        var waypointsArr = [];
+        var waypointInputs = document.getElementsByClassName('waypoint-field');
 
-        //DESCRIPTION: deletes waypoint input fields & supporting div's
-        function deleteWaypoints () {
-          var targetNode;
-          var waypointInputs = document.getElementsByClassName('waypoint-field');
-          var waypointsArr = toArr(waypointInputs);
+        waypointsArr = Array.prototype.map.call(waypointInputs, function (waypoint) {
+            waypointObj = {};
+            waypointObj["location"] = waypoint.value;
+            return waypointObj;
+        });
 
-          waypointsArr.forEach(function (){
-            targetNode = document.getElementById('solidPanel');
-            targetNode.removeChild(targetNode.getElementsByClassName('nav-row-Solid')[1]);
-          });
+        return waypointsArr;
+      };
 
-          inputCount = 0;
-        }
+      //DESCRIPTION: stores waypoints of the current Optimal Route in a passed-in array
+      function storeOptimalWaypoints (element) {
+        if(element.end_address !== element[element.length-1].end_address){
+          optimalRoute.push({location: element.end_address});}
+      }
 
-        //clears all input fields
-        function clearInputs () {
-          var inputFields = document.getElementsByTagName('input');
-
-          Array.prototype.forEach.call(inputFields, function (element){
-            element.value = "";
-          });
-       }
-        
-        //DESCRIPTION: stores waypoints in an array
-        var storeWaypoints = function () {
-          var waypointsArr = [];
-          var waypointInputs = document.getElementsByClassName('waypoint-field');
-
-          waypointsArr = Array.prototype.map.call(waypointInputs, function (waypoint) {
-              waypointObj = {};
-              waypointObj["location"] = waypoint.value;
-              return waypointObj;
-          });
-
-          return waypointsArr;
-        };
-
-        //DESCRIPTION: stores waypoints of the current Optimal Route in a passed-in array
-        function storeOptimalWaypoints (element) {
-          if(element.end_address !== element[element.length-1].end_address){
-            optimalRoute.push({location: element.end_address});}
-        }
-
-        //assigns the optimal travel duration to optimatlTravleTime
-        function setMostEfficient (current, optimal, action) {
-          if (current < optimal || optimal === 0){
-            optimal = current;
-            if (typeof action === 'function'){ action();
-              return optimal;
-            } 
+      //assigns the optimal travel duration to optimatlTravleTime
+      function setMostEfficient (current, optimal, action) {
+        if (current < optimal || optimal === 0){
+          optimal = current;
+          if (typeof action === 'function'){ action();
+            return optimal;
           } 
-          return optimal;
+        } 
+        return optimal;
 
-        }
+      }
 
-        function pullData (objArr, values){
-          var newArr = [];
-          //var vObj = {};
+      function pullData (objArr, values){
+        var newArr = [];
+        //var vObj = {};
 
-          values.forEach(function (val, index){
-            var valArr = objArr.map(function (obj, objIndex){
-              //create proper property call using bracket notation
-              return getPropertyVal(obj, val);
-              //return obj[val];
-            })
-            newArr.push(valArr);
+        values.forEach(function (val, index){
+          var valArr = objArr.map(function (obj, objIndex){
+            //create proper property call using bracket notation
+            return getPropertyVal(obj, val);
+            //return obj[val];
           })
+          newArr.push(valArr);
+        })
 
-        function getPropertyVal (obj, property){
-          var propArr = [];
-          var val = obj;
+      function getPropertyVal (obj, property){
+        var propArr = [];
+        var val = obj;
 
-          propArr = property.split('.');
-          propArr.forEach(function (element) {
-            val = val[element];
-          })
-          return val;
-        }
+        propArr = property.split('.');
+        propArr.forEach(function (element) {
+          val = val[element];
+        })
+        return val;
+      }
+       
+        return newArr;
+      }
+
+      function displayRouteInfo (routeInfo){
+        //var legInfoArr = [];
+        var legInfoArr = routeInfo;
+
+        //legInfoArr = createUnits(routeInfo);
+        //display start + end destinations, duration, distance
+
+        legInfoArr.forEach(function (priEl, priIndex){
+            //create HTML (function?)
+            createRouteInfoCard();
+
+            //define variables
+            var startVar = document.getElementById('startVar_' + infoCardCount);
+            var endVar = document.getElementById('endVar_' + infoCardCount);
+            var durVar = document.getElementById('durVar_' + infoCardCount);
+
+            //reassign values to variables
+            startVar.innerHTML = legInfoArr[0][priIndex];
+            endVar.innerHTML = legInfoArr[1][priIndex];
+            durVar.innerHTML = legInfoArr[2][priIndex];
+
+            // startVar.innerHTML = legInfoArr[priIndex][0];
+            // endVar.innerHTML = legInfoArr[priIndex][1];
+            // durVar.innerHTML = legInfoArr[priIndex][2];
          
-          return newArr;
-        }
+        })   
+      }
 
-        function displayRouteInfo (routeInfo){
-          var legInfoArr = [];
+      var infoCardCount = 0;
 
-          legInfoArr = createUnits(routeInfo);
-          //display start + end destinations, duration, distance
+      function createRouteInfoCard () {
+        infoCardCount++;
 
-          legInfoArr.forEach(function (priEl, priIndex){
-            legInfoArr[priIndex].forEach(function (secEl)){
-              //start = legInfoArr[priIndex][0]
-              //end = legInfoArr[priIndex][1]
-              //duration = legInfoArr[priIndex][2]
-            }
+        var routeInfoDisplay = document.getElementById('routeInfoDisplay');
+
+        //this is ugly and confusing
+        //received errors when new lines were placed between the ""'s 
+        var infoCard =  "<div class='legInfoCard'> <div class='infoDiv infoLeft'> <div class='infoTitle'>Start</div> <div id='startVar' class='infoContent'></div> </div> <div class='infoDiv infoRight'> <div class='infoTitle'> End</div> <div id='endVar' class='infoContent'></div> </div> <div class='infoDiv infoRight'> <div class='infoTitle'>Duration</div> <div id='durVar' class='infoContent'></div> </div> </div>";
+
+        routeInfoDisplay.innerHTML += infoCard;
+
+
+        //give id's to divs that will have variable values inserted
+        var startVar = document.getElementById('startVar');
+        startVar.id = 'startVar_' + infoCardCount;
+
+        var endVar = document.getElementById('endVar');
+        endVar.id = 'endVar_' + infoCardCount;
+
+        var durVar = document.getElementById('durVar');
+        durVar.id = 'durVar_' + infoCardCount;
+      }
+
+      //TODO: replace one of the for's w/ a .forEach() AND/OR .map()
+      function createUnits (infoArr) {
+        var unitsArr = [];
+        var aUnit = [];
+
+        unitsArr = infoArr[0].map(function (priEL, priIndex){
+          return infoArr.map(function (secEl, secIndex){
+            return secEl[priIndex];
           })
+        })
 
-          routeInfo.forEach(function (element, index){
-            routeInfo[index].forEach(function )
-          })
+        // for (var i = 0; i < infoArr.length; i++){
+        //   for (var x = 0; x < infoArr.length; x++){
+        //     aUnit.push(infoArr[x][i])
+        //   }
+        //   unitsArr.push(aUnit.slice(0));
+        //   aUnit = [];
+        // }
 
-          routeInfoDisplay = document.createElement('div');
-          routeInfoDisplay.class = 'routeInfoDisplay';
+        // infoArr.forEach(function (priEl, priIndex){
+        //   unitsArr.push(infoArr.map(function (secEL, secIndex){
+        //     return infoArr[secIndex][priIndex];
+        //   }))
+        // })
+        return unitsArr;
+      }
 
-          legInfoDisplay = document.createElement('div');
-          legInfoDisplay.class = 'legInfoDisplay';
-          //for every end_address produce a div container thing   
-        }
-
-        //TODO: replace one of the for's w/ a .forEach() AND/OR .map()
-        function createUnits (infoArr) {
-          var unitsArr = [];
-          var aUnit = [];
-
-          for (var i = 0; i < infoArr.length; i++){
-            for (var x = 0; x < infoArr[i].length; x++){
-              aUnit.push(infoArr[x][i])
-            }
-            unitsArr.push(aUnit.slice(0));
-            aUnit = [];
-          }
-
-          // infoArr.forEach(function (priEl, priIndex){
-          //   unitsArr.push(infoArr.map(function (secEL, secIndex){
-          //     return infoArr[secIndex][priIndex];
-          //   }))
-          // })
-          return unitsArr;
-        }
-
-        function toArr (arrLike) {
-          return Array.prototype.slice.call(arrLike);
-        }
+      function toArr (arrLike) {
+        return Array.prototype.slice.call(arrLike);
+      }
 
       //Maps API  
       function initMap() {
@@ -506,7 +535,7 @@
                 calcRoute(optimalRoute, false);
               } 
             } else if (status === google.maps.DirectionsStatus.OK) {
-                //displayRouteInfo(routeInfo);
+                displayRouteInfo(routeInfo);
                 directionsDisplay.setDirections(result);
                 }
 
