@@ -134,8 +134,7 @@
           var icon = inputBody.getElementsByTagName('div')[1];
           var input = inputBody.getElementsByTagName('input')[0];
 
-          icon.innerHTML = "<button id='delButton' class='button delButton'>X</button>";
-          //icon.innerHTML = "";
+          icon.innerHTML = "";
 
           input.className += 'waypoint-field';
           input.id = 'waypoint_' + (inputCount);
@@ -149,6 +148,7 @@
           destinationAutoComplete = new google.maps.places.Autocomplete((document.getElementById('waypoint_' + (inputCount))));         
         } 
       };
+
       //DESCRIPTION: produces every possible sequence/order of the elements of an array
       //ex. ABC ==> ABC, ACB, BCA, BAC, CAB, CBA
       function allCombinations (startingIndex, result, lastPush){
@@ -187,35 +187,6 @@
               } else { optimizeButton.disabled = true;} 
       }
 
-      function createDelButtonID (count) {
-        var delButton = document.getElementById('delButton');
-        delButton.id = 'delButton_' + count;
-      }
-
-      function createDelButtonHandler (count) {
-        var delButton = document.querySelector('#delButton_'+ count);
-        delButton.addEventListener('click', function (delButton) {return function () {
-            deleteButtonHandler(delButton);
-          }
-        });
-      }
-
-      function deleteWaypoint (target) {
-        targetNode = document.getElementById('solidPanel');
-        targetNode.removeChild(targetNode.getElementsByClassName('nav-row-Solid')[getTarget(target.id)]);
-      }
-
-      function getTarget (id) {
-        var target = id.slice(-1);
-        return target;
-
-      }
-
-      function deleteButtonHandler (input) {
-        deleteWaypoint(input);
-        //fix waypoints array
-      }
-
       //DESCRIPTION: deletes waypoint input fields & supporting div's
       function deleteWaypoints () {
         var targetNode;
@@ -246,7 +217,7 @@
 
         waypointsArr = Array.prototype.map.call(waypointInputs, function (waypoint) {
             waypointObj = {};
-            waypointObj["location"] = waypoint.value;
+            waypointObj.location = waypoint.value;
             return waypointObj;
         });
 
@@ -263,7 +234,8 @@
       function setMostEfficient (current, optimal, action) {
         if (current < optimal || optimal === 0){
           optimal = current;
-          if (typeof action === 'function'){ action();
+          if (typeof action === 'function'){ 
+            action();
             return optimal;
           } 
         } 
@@ -271,19 +243,21 @@
 
       }
 
-      function pullData (objArr, values){
+      //DESCRIPTION: utility function for 
+      //calling a function on various elements
+      function assign (contentArr, propertyArr, callback){
         var newArr = [];
-        //var vObj = {};
 
-        values.forEach(function (val, index){
-          var valArr = objArr.map(function (obj, objIndex){
-            //create proper property call using bracket notation
-            return getPropertyVal(obj, val);
-            //return obj[val];
-          })
-          newArr.push(valArr);
-        })
+        newArr = contentArr.map(function (priEl){
+          return propertyArr.map(function (secEl){
+            return callback(priEl, secEl);
+          });
+        });
+        return newArr;
+      }
 
+      //DESCRIPTION: utility function for 
+      //retrieving the value of an object's property
       function getPropertyVal (obj, property){
         var propArr = [];
         var val = obj;
@@ -291,43 +265,67 @@
         propArr = property.split('.');
         propArr.forEach(function (element) {
           val = val[element];
-        })
+        });
         return val;
-      }
-       
-        return newArr;
-      }
-
-      function displayRouteInfo (routeInfo){
-        //var legInfoArr = [];
-        var legInfoArr = routeInfo;
-
-        //legInfoArr = createUnits(routeInfo);
-        //display start + end destinations, duration, distance
-
-        legInfoArr.forEach(function (priEl, priIndex){
-            //create HTML (function?)
-            createRouteInfoCard();
-
-            //define variables
-            var startVar = document.getElementById('startVar_' + infoCardCount);
-            var endVar = document.getElementById('endVar_' + infoCardCount);
-            var durVar = document.getElementById('durVar_' + infoCardCount);
-
-            //reassign values to variables
-            startVar.innerHTML = legInfoArr[0][priIndex];
-            endVar.innerHTML = legInfoArr[1][priIndex];
-            durVar.innerHTML = legInfoArr[2][priIndex];
-
-            // startVar.innerHTML = legInfoArr[priIndex][0];
-            // endVar.innerHTML = legInfoArr[priIndex][1];
-            // durVar.innerHTML = legInfoArr[priIndex][2];
-         
-        })   
       }
 
       var infoCardCount = 0;
+      var varArr = ["startVar", "endVar", "durVar"];
 
+      //DESCRIPTION: display route info such as
+      //start_address, end_address, duration
+      function displayRouteInfo (routeInfo){
+        var legInfoArr = routeInfo;
+        var idArr = [];
+
+        deleteRouteInfo();
+
+        //convert duration number from seconds to hours
+        legInfoArr.map(function (element){
+          element[2] = secsToHours(element[2]);
+        });
+
+        legInfoArr.forEach(function (element, Index){
+          //create HTML for each card displaying the route's info
+          createRouteInfoCard();
+
+          //assign placeholders unique id's
+          idArr = assign(varArr, [getId], setId);
+
+          //assign values to unique placeholders
+          element.forEach(function (el, ind){
+            assign([el], idArr[ind], setValue);
+          });
+        });   
+      }
+
+      //DESCRIPTION: utility functions for
+      //converting seconds into hours
+      function secsToHours (seconds) {
+        var hours = (seconds/60)/60;
+        return Math.round(100*hours)/100;
+      }
+
+      //DESCRIPTION: deletes any existing 
+      //route info cards before production of more
+      function deleteRouteInfo () {
+        infoCardCount = 0;
+
+        if (document.getElementsByClassName('legInfoCard') !== null){
+          var routeInfoDisplay = document.getElementById('routeInfoDisplay');
+          routeInfoDisplay.innerHTML = "";
+        }
+      }
+
+      //DESCRIPTION: utility function for
+      //setting the innerHTML of an html element
+      //to the value of a javascript element
+      function setValue (value, target){
+          getId(target).innerHTML = value;
+      }
+      
+      //DESCRIPTION: create a card (iteration)
+      //of route info
       function createRouteInfoCard () {
         infoCardCount++;
 
@@ -335,49 +333,29 @@
 
         //this is ugly and confusing
         //received errors when new lines were placed between the ""'s 
-        var infoCard =  "<div class='legInfoCard'> <div class='infoDiv infoLeft'> <div class='infoTitle'>Start</div> <div id='startVar' class='infoContent'></div> </div> <div class='infoDiv infoRight'> <div class='infoTitle'> End</div> <div id='endVar' class='infoContent'></div> </div> <div class='infoDiv infoRight'> <div class='infoTitle'>Duration</div> <div id='durVar' class='infoContent'></div> </div> </div>";
+        var infoCard =  "<div class='legInfoCard'> <div class='placesInfo infoLeft'> <div class='infoDiv'> <div class='infoTitle'>Start: </div> <div id='startVar' class='infoContent'></div> </div> <div class='infoDiv'> <div class='infoTitle'>End: </div> <div id='endVar' class='infoContent'></div> </div> </div> <div class='infoDiv durationInfo infoRight'> <div id='durVar' class='timeNum'></div><div class='timeText'>Hours</div> </div> </div> </div>";
 
         routeInfoDisplay.innerHTML += infoCard;
-
-
-        //give id's to divs that will have variable values inserted
-        var startVar = document.getElementById('startVar');
-        startVar.id = 'startVar_' + infoCardCount;
-
-        var endVar = document.getElementById('endVar');
-        endVar.id = 'endVar_' + infoCardCount;
-
-        var durVar = document.getElementById('durVar');
-        durVar.id = 'durVar_' + infoCardCount;
       }
 
-      //TODO: replace one of the for's w/ a .forEach() AND/OR .map()
-      function createUnits (infoArr) {
-        var unitsArr = [];
-        var aUnit = [];
-
-        unitsArr = infoArr[0].map(function (priEL, priIndex){
-          return infoArr.map(function (secEl, secIndex){
-            return secEl[priIndex];
-          })
-        })
-
-        // for (var i = 0; i < infoArr.length; i++){
-        //   for (var x = 0; x < infoArr.length; x++){
-        //     aUnit.push(infoArr[x][i])
-        //   }
-        //   unitsArr.push(aUnit.slice(0));
-        //   aUnit = [];
-        // }
-
-        // infoArr.forEach(function (priEl, priIndex){
-        //   unitsArr.push(infoArr.map(function (secEL, secIndex){
-        //     return infoArr[secIndex][priIndex];
-        //   }))
-        // })
-        return unitsArr;
+      //DESCRIPTION: utility function for
+      //set the id of a given property to given name
+      function setId(name, property){
+        name = property(name);
+        name.id = name.id + '_' + infoCardCount;
+        return name.id;
       }
 
+      //DESCRIPTION: utility function for
+      //retrieving the reference of an 
+      //html element of a given id
+      function getId (id){
+        return document.getElementById(id);
+      }
+     
+      //DESCRIPTION: utility function
+      //for converting an array-like object
+      //into an array
       function toArr (arrLike) {
         return Array.prototype.slice.call(arrLike);
       }
@@ -385,8 +363,8 @@
       //Maps API  
       function initMap() {
         //Google Map Api Default Code
-        var directionsService = new google.maps.DirectionsService;
-        var directionsDisplay = new google.maps.DirectionsRenderer;
+        var directionsService = new google.maps.DirectionsService();
+        var directionsDisplay = new google.maps.DirectionsRenderer();
         var map = new google.maps.Map(document.getElementById('map'), {
           center: {lat: 37.7833, lng: -122.4167},
           zoom: 13
@@ -402,8 +380,6 @@
         destination_1AutocompleteSolid = new google.maps.places.Autocomplete((document.getElementById('endDestinationSolid')));
 
         places = new google.maps.places.PlacesService(map);
-
-        
 
         //DESCRIPTION: Changes map Location to address selected from AutoComplete
         startAutocomplete.addListener('place_changed', onPlaceChanged);
@@ -421,7 +397,6 @@
 
         //DESCRIPTION: Calculates and displays directions
         directionsDisplay.setMap(map);
-
 
         //DESCRIPTION: Button Handlers
         function goButtonFloatHandler () {
@@ -456,9 +431,7 @@
 
         function optimizeButtonHandler () {
           calcRoute(storeWaypoints(), true);
-         }
-
-        
+         }       
 
         //DESCRIPTION: Assignment of Button Actions
       goButtonFloat.addEventListener('click', goButtonFloatHandler);
@@ -469,12 +442,15 @@
       addButtonSolid.addEventListener('click', addButtonSolidHandler);
       clearButtonSolid.addEventListener('click', clearButtonSolidHandler);
       optimizeButton.addEventListener('click', optimizeButtonHandler);
-      //delButton.addEventListener('click', deleteButtonHandler(delButton));
-
+   
         function calcRoute(waypoints, optimizeRoute) {
+
+          //TODO: organize var's by type (num, arr, etc.)
           var start = document.getElementById('startSolid').value;
           var destination_1 = document.getElementById('endDestinationSolid').value;          
           var waypointsArray = [];
+          var routeProperties = ["start_address", "end_address", "duration.value"];
+          var durationValues = [];
           var travelTime = 0;
           var optimalTravelTime = 0;
           routeInfo = [];
@@ -508,30 +484,33 @@
             travelTime = 0;
 
             //TODO: simplify? use w/out valuesNameArr
-            routeInfo = pullData(result.routes[0].legs, ["start_address", "end_address", "duration.value"]);
+            routeInfo = assign(result.routes[0].legs, routeProperties, getPropertyVal);
 
-            //get total travel duration for the route currently analyzed IF the route has waypoints
             if (waypointsArray.length > 1){
 
-              travelTime = routeInfo[2].reduce(function (previousVal, currentVal){return previousVal + currentVal;})
+              durationValues = routeInfo.map(function (el){
+                return el[2];
+              });
 
-              // result.routes[0].legs.forEach(function(element){
-              //   travelTime += element.duration.value;
-              // });
+              travelTime = durationValues.reduce(function (previousVal, currentVal){return previousVal + currentVal;});
+
             }
 
             if (optimizeRoute){
               optimalTravelTime = setMostEfficient(travelTime, optimalTravelTime, function(){
-                optimalRoute = [];
-                result.routes[0].legs.forEach(function(element){optimalRoute.push({location: element.end_address});
+
+                optimalRouteInfo = routeInfo;
+                optimalRoute = optimalRouteInfo.map(function (el){
+                  return {location: el[1]};
                 });
-                //'end_address' of the last 'leg' is equal to 'destination'
+
                 //delete the value at the last index in order to avoid mapping error
                 optimalRoute.pop();
               });
 
               if (numRoute === waypointsArray.length-1 && gateOpen){
                 gateOpen = false;
+                displayRouteInfo(optimalRouteInfo);
                 calcRoute(optimalRoute, false);
               } 
             } else if (status === google.maps.DirectionsStatus.OK) {
@@ -552,4 +531,3 @@
         
   </body>
 </html>
-

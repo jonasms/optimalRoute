@@ -149,22 +149,24 @@ html, body, #display { height: 100%; margin: 0; padding: 0; }
 	margin-top: 17%;
 }
 
+/* Buttons
+================================= */
 #clearButtonSolid {
-    margin-top: 15px;
-    margin-left: 15px;
-    font-size: 1.3em;
-    border: none;
+  margin-top: 15px;
+  margin-left: 15px;
+  font-size: 1.3em;
+  border: none;
 }
 
 #clearButtonFloat {
-    margin-top: 10px;
-    margin-left: 10px;
-    font-size: 1.3em;
-    border: none;
+  margin-top: 10px;
+  margin-left: 10px;
+  font-size: 1.3em;
+  border: none;
 }
 
 #optimizeButton {
-margin-left: 135px;
+	margin-left: 135px;
 }
 
 .button {
@@ -229,6 +231,63 @@ select:focus,
 textarea:focus,
 button:focus {
 outline: none;
+}
+
+/* InfoDisplay
+================================= */
+#routeInfoDisplay {
+	height: 400px;
+	width: 90%;
+	margin: auto;
+}
+
+.legInfoCard {
+	height: 75px;
+	width: 100%;
+	margin: 20px 0 0 0 ;
+  border-color: #ffffff;
+  border-width: 1px;}
+
+.infoDiv {
+	width: 200px;
+	color: #ffffff;
+}
+
+.infoTitle {
+	font-size: 1.2em;
+	display: inline-block;
+}
+
+.placesInfo {
+	width: 45%;
+}
+
+.infoContent {
+	display: inline-block;
+	font-size: 1.0em
+}
+
+.durationInfo {
+	width: 20%;
+	margin-left: 90px;
+}
+
+.timeNum {
+	font-size: 1.5em;
+	color: #ffffff;
+}
+
+.timeText {
+	font-size: 1.5em;
+	color: #ffffff;
+}
+
+.infoLeft {
+	display: inline-block;
+}
+
+.infoRight {
+	display: inline-block;
 }
 
 /* Transformations
