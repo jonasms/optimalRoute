@@ -6,22 +6,22 @@ var varArr = ["startVar", "endVar", "durVar"];
 
 // == Button Reference Assignments ==
 
-var container = document.querySelector('.contain');
+var container = document.getElementsByClassName('contain');
+  
+var clearButtonSolid = document.getElementById('clearButtonSolid');
+var addButtonSolid = document.getElementById('addButtonSolid');
+var goButtonSolid = document.getElementById('goButtonSolid');
+var optimizeButton = document.getElementById('optimizeButton');
 
-var clearButtonSolid = document.querySelector('#clearButtonSolid');
-var addButtonSolid = document.querySelector('#addButtonSolid');
-var goButtonSolid = document.querySelector('#goButtonSolid');
-var optimizeButton = document.querySelector('#optimizeButton');
-
-var clearButtonFloat = document.querySelector('#clearButtonFloat');
-var addButtonFloat = document.querySelector('#addButtonFloat');
-var goButtonFloat = document.querySelector('#goButtonFloat');
+var clearButtonFloat = document.getElementById('clearButtonFloat');
+var addButtonFloat = document.getElementById('addButtonFloat');
+var goButtonFloat = document.getElementById('goButtonFloat');
 
 // == Panel Transformations and Functions ==
 
 //DESCRIPTION: change positions of panels (solid & float)
 function changePanel(){
-  container.classList.toggle('panel-change');
+  container[0].classList.toggle('panel-change');
 }
 
 //DESCRIPTION: copies Origin & Destination input values from floatingPanel to solidPanel 
@@ -174,7 +174,20 @@ function createRouteInfoCard () {
 
   //this is ugly and confusing
   //received errors when new lines were placed between the ""'s 
-  var infoCard =  "<div class='legInfoCard'> <div class='placesInfo infoLeft'> <div class='infoDiv'> <div class='infoTitle'>Start: </div> <div id='startVar' class='infoContent'></div> </div> <div class='infoDiv'> <div class='infoTitle'>End: </div> <div id='endVar' class='infoContent'></div> </div> </div> <div class='infoDiv durationInfo infoRight'> <div id='durVar' class='timeNum'></div><div class='timeText'>Hours</div> </div> </div> </div>";
+  var infoCard =  "<div class='legInfoCard'>";
+  infoCard += "<div class='placesInfo infoLeft'>";
+  infoCard += "<div class='infoDiv'>";
+  infoCard += "<div class='infoTitle'>Start: </div>";
+  infoCard += "<div id='startVar' class='infoContent'></div>";
+  infoCard += "</div>";
+  infoCard += " <div class='infoDiv'>";
+  infoCard += "<div class='infoTitle'>End: </div>";
+  infoCard += "<div id='endVar' class='infoContent'></div>";
+  infoCard += "</div> </div>";
+  infoCard += "<div class='infoDiv durationInfo infoRight'>";
+  infoCard += "<div id='durVar' class='timeNum'></div>";
+  infoCard += "<div class='timeText'>Hours</div>";
+  infoCard += "</div> </div> </div>";
 
   routeInfoDisplay.innerHTML += infoCard;
 }
